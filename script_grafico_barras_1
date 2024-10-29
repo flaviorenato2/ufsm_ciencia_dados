@@ -1,0 +1,64 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Carregar o arquivo CSV com a codificação 'latin1' e especificar delimitador
+file_path = '/content/drive/MyDrive/Artigo Pós Ciências de Dados/Dados_Para_Analise/RAIS_SubClasse.csv'
+df = pd.read_csv(file_path, encoding='latin1', delimiter=';', on_bad_lines='skip')
+
+# Subcategorias de interesse
+subcategorias = [
+    "Desenvolvimento de programas de computador sob encomenda",
+    "Desenvolvimento e licenciamento de programas de computador não-customizáveis",
+    "Desenvolvimento e licenciamento de programas de computador customizáveis",
+    "Consultoria em tecnologia da informação",
+    "Suporte técnico, manutenção e outros serviços em tecnologia da informação",
+    "Tratamento de dados, provedores de serviços de aplicação e serviços de hospedagem na internet",
+    "web design"
+]
+
+# Filtrar o DataFrame para incluir apenas as subcategorias de interesse
+df_filtered = df[df['CNAE_2_0_Subclasse'].isin(subcategorias)]
+
+# Derreter o DataFrame para formato longo (long format)
+df_melted = df_filtered.melt(id_vars=['CNAE_2_0_Subclasse'],
+                             value_vars=[str(year) for year in range(2002, 2024)],
+                             var_name='Ano', value_name='Número de Vínculos Empregatícios')
+
+# Converter a coluna 'Número de Vínculos Empregatícios' para numérico, forçando erros para NaN
+df_melted['Número de Vínculos Empregatícios'] = pd.to_numeric(df_melted['Número de Vínculos Empregatícios'], errors='coerce')
+
+# Configuração de cores para as subcategorias
+colors = plt.get_cmap('tab10')(np.linspace(0, 1, len(subcategorias)))
+
+# Criar o gráfico de barras em alta resolução
+fig, ax = plt.subplots(figsize=(14, 8), dpi=300)
+
+# Agrupar as subcategorias e plotar cada uma individualmente
+width = 0.12  # Largura de cada barra
+x = np.arange(len(df_melted['Ano'].unique()))  # Posição X para os anos
+
+for i, subcategoria in enumerate(subcategorias):
+    data = df_melted[df_melted['CNAE_2_0_Subclasse'] == subcategoria]
+    ax.bar(x + i * width, data['Número de Vínculos Empregatícios'], width=width, label=subcategoria, color=colors[i])
+
+# Configurar os rótulos do eixo X e Y
+ax.set_xlabel('Ano', fontsize=14)
+ax.set_ylabel('Número de Vínculos Empregatícios', fontsize=14)
+ax.set_title('Número de Vínculos Empregatícios por Subclasse (2002-2023)', fontsize=16)
+
+# Ajustar as posições do eixo X e definir os rótulos
+ax.set_xticks(x + width * (len(subcategorias) / 2 - 0.5))
+ax.set_xticklabels(df_melted['Ano'].unique(), rotation=45)
+
+# Colocar a legenda abaixo do gráfico
+ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=2, fontsize=10)
+
+# Ajustar layout para que todos os elementos fiquem visíveis
+plt.tight_layout()
+
+# Salvar o gráfico em alta resolução
+plt.savefig('grafico_colunas_individuais_alta_resolucao.png', dpi=300)
+
+# Mostrar o gráfico
+plt.show()
