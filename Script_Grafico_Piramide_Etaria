@@ -1,0 +1,66 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Caminho para o arquivo
+file_path = "/content/drive/MyDrive/Artigo Pós Ciências de Dados/Dados_Para_Analise/Rais_SubClasse_Faixa_Etaria_novo.csv"
+
+# Carregar os dados com o delimitador e a codificação apropriada
+df = pd.read_csv(file_path, delimiter=';', encoding='ISO-8859-1')
+
+# Lista das subclasses desejadas
+subclasses_desejadas = [
+    "Desenvolvimento de programas de computador sob encomenda",
+    "Desenvolvimento e licenciamento de programas de computador não-customizáveis",
+    "Desenvolvimento e licenciamento de programas de computador customizáveis",
+    "Consultoria em tecnologia da informação",
+    "Suporte técnico, manutenção e outros serviços em tecnologia da informação",
+    "Tratamento de dados, provedores de serviços de aplicação e serviços de hospedagem na internet",
+    "Web design"
+]
+
+# Filtrar o DataFrame para conter apenas as subclasses desejadas
+df_filtrado = df[df['Subclasse'].isin(subclasses_desejadas)]
+
+# Preparar a estrutura dos dados
+faixas_etarias = df_filtrado.columns[1:]  # Excluindo a coluna 'Subclasse'
+subclasses = df_filtrado['Subclasse']
+
+# Configuração do gráfico
+fig, ax = plt.subplots(figsize=(12, 8))
+
+# Variável de empilhamento inicializada
+bottom_positive = [0] * len(faixas_etarias)  # Base para a empilhagem do lado direito
+bottom_negative = [0] * len(faixas_etarias)  # Base para a empilhagem do lado esquerdo
+
+# Paleta de cores para cada subclasse
+colors = plt.cm.tab10.colors  # Paleta de 10 cores distintas
+
+# Adicionar cada subclasse como parte da pirâmide etária simétrica
+for i, subclasse in enumerate(subclasses_desejadas):
+    if subclasse in df_filtrado['Subclasse'].values:
+        dados_subclasse = df_filtrado[df_filtrado['Subclasse'] == subclasse].iloc[0, 1:]
+        
+        # Barras empilhadas no lado esquerdo e direito
+        ax.barh(faixas_etarias, -dados_subclasse, left=bottom_negative, label=subclasse, color=colors[i % len(colors)], edgecolor='grey')
+        ax.barh(faixas_etarias, dados_subclasse, left=bottom_positive, color=colors[i % len(colors)], edgecolor='grey')
+        
+        # Atualizar a base de empilhamento
+        bottom_positive += dados_subclasse.values
+        bottom_negative -= dados_subclasse.values
+
+# Configurações do gráfico
+ax.set_xlabel('População')
+ax.set_ylabel('Faixa Etária')
+ax.set_title('Pirâmide Etária')
+
+# Ajustar rótulos do eixo X para mostrar valores absolutos
+ax.set_xticklabels([abs(int(label)) for label in ax.get_xticks()])
+
+# Legenda posicionada na parte inferior
+ax.legend(title='Subclasses', loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=2, fontsize=9, frameon=False)
+
+# Ajuste dos espaçamentos
+plt.tight_layout(rect=[0, 0.1, 1, 1])  # Espaço adicional para a legenda na parte inferior
+
+# Exibir gráfico
+plt.show()
